@@ -60,6 +60,41 @@
           </a>
         </li><!-- End Search Icon-->
 
+        <li class="nav-item dropdown">
+
+          <a class="nav-link nav-icon" href="#" data-bs-toggle="dropdown">
+            <i class="bi bi-bell"></i>
+            {% if notifications %}
+            <span class="badge bg-success badge-number">.</span>
+            {% endif %}
+          </a><!-- End Notification Icon -->
+
+          <ul style="width: 400px;" class="dropdown-menu dropdown-menu-end dropdown-menu-arrow notifications">
+            
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+            {% for notification in notifications %}
+            <li class="notification-item">
+              <i class="bi bi-info-circle text-primary"></i>
+              <div>
+                <p style="color: black;">{{notification.message}} - 
+                  <a href="{{url_for('mark_as_readmin', notification_id=notification.id)}}">
+                    Mark as Read
+                  </a>
+                </p>
+              </div>
+            </li>
+            
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+            {% endfor %}
+          
+          </ul><!-- End Notification Dropdown Items -->
+
+        </li><!-- End Notification Nav -->
+
         <li class="nav-item dropdown pe-3">
 
           <a class="nav-link nav-profile d-flex align-items-center pe-0" href="#" data-bs-toggle="dropdown">
@@ -193,6 +228,34 @@
           </div>
         </form><!-- End Multi Columns Form -->
 
+        <br>
+        <br>
+        <p style="font-weight: 700;">Already Set Schedules</p>
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col">#</th>
+              <th scope="col">Name</th>
+              <th scope="col">Day</th>
+              <th scope="col">Date</th>
+              <th scope="col">Start Time</th>
+              <th scope="col">End Time</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for shift in shifts %}
+              <tr>
+                  <td>{{ shift.id }}</td>
+                  <td>{{ shift.employeename }}</td>
+                  <td>{{shift.shiftdate.strftime("%A")}}</td>
+                  <td>{{shift.shiftdate}}</td>
+                  <td>{{ shift.shiftstarttime }}</td>
+                  <td>{{ shift.shiftendtime }}</td>
+              </tr>
+          {% endfor %}
+    
+          </tbody>
+        </table>
       </div>
     </div>
 

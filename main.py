@@ -12,12 +12,12 @@
 # notifications#
 
 import mysql.connector
-from flask import Flask, request, redirect, url_for, render_template
+from flask import Flask, request, jsonify,redirect, url_for, render_template
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import and_, exists
 from sqlalchemy.orm import relationship
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
-
+import requests
 from datetime import datetime, date, timedelta
 import time
 import base64
@@ -75,6 +75,7 @@ with app.app_context():
         userid = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
         latitude = db.Column(db.Float, nullable=False)
         longitude = db.Column(db.Float, nullable=False)
+        address = db.Column(db.String(250))
         date = db.Column(db.Date, nullable=False, default=datetime.utcnow().date)
         createdat = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
@@ -278,7 +279,8 @@ def proviiderhome():
     #text = f"Welcome, {current_user.firstname}"
     name = f"{current_user.firstname} {current_user.lastname}"
     email = f"{current_user.emailaddress}"
-    return render_template("provider-profile-edit.html", name=name, company=company,job=job,imagesrc=imagesrc,
+    notifications = Notification.query.filter_by(employeename=current_user.firstname+' '+current_user.lastname, is_Read=False).all()
+    return render_template("provider-profile-edit.html", name=name, notifications=notifications,company=company,job=job,imagesrc=imagesrc,
                                                         about=about,email=email)
 
 
@@ -299,6 +301,7 @@ def changepassword():
         name = f"{current_user.firstname} {current_user.lastname}"
         email = f"{current_user.emailaddress}"
         fullname = f'{current_user.firstname} {current_user.lastname}'
+        notifications = Notification.query.filter_by(employeename=current_user.firstname+' '+current_user.lastname, is_Read=False).all()
         checker = db.session.query(User).filter(User.firstname +' '+ User.lastname==fullname).first()
         
         if checker.password == currentpassword:
@@ -306,21 +309,21 @@ def changepassword():
                 checker.password = newpassword
                 db.session.commit()
                 success = f'Password changed succesfully'
-                return render_template("provider-profile-edit.html", success=success,name=name, company=company,job=job,
+                return render_template("provider-profile-edit.html", success=success,name=name,notifications=notifications, company=company,job=job,
                                                         about=about,email=email, text=text)
             else:
                 message = f"New password should be same as re entersed password"
                 return render_template("provider-profile-edit.html",name=name, company=company,job=job,
-                                                        about=about,email=email, text=text,message=message)
+                                                        about=about,email=email,notifications=notifications, text=text,message=message)
         else:
             message1 = f"Incorrect current password"
-            return render_template("provider-profile-edit.html",name=name, company=company,job=job,
+            return render_template("provider-profile-edit.html",name=name,notifications=notifications, company=company,job=job,
                                                         about=about,email=email, text=text,message1=message1)
         
     #checker = User.query.filter_by(fullname =name).first()
     
     
-    return render_template("provider-profile-edit.html", name=name, company=company,job=job,
+    return render_template("provider-profile-edit.html", name=name, company=company,job=job,notifications=notifications,
                                                         about=about,email=email, text=text)
 
 
@@ -343,8 +346,9 @@ def viewschedule():
             imagesrc = None
         
         job = f"{current_user.job}"
+        notifications = Notification.query.filter_by(employeename=current_user.firstname+' '+current_user.lastname, is_Read=False).all()
 
-        return render_template("pages-viewschedule-edit.html", job=job,name=name,imagesrc=imagesrc,shifts = shifts)
+        return render_template("pages-viewschedule-edit.html", job=job,name=name,notifications=notifications,imagesrc=imagesrc,shifts = shifts)
 
 @app.route('/home/requestshift')
 @login_required
@@ -360,8 +364,9 @@ def requestshift():
         imagesrc = None
     
     job = f"{current_user.job}"
+    notifications = Notification.query.filter_by(employeename=current_user.firstname+' '+current_user.lastname, is_Read=False).all()
 
-    return render_template("pages-requestschedule-edit.html", job=job,name=name,imagesrc=imagesrc)
+    return render_template("pages-requestschedule-edit.html", job=job,name=name,notifications=notifications,imagesrc=imagesrc)
 
 @app.route('/home/requestshiftsave', methods = ['POST'])
 @login_required
@@ -381,6 +386,7 @@ def requestshiftsave():
             imagesrc = None
 
         name = f"{current_user.firstname} {current_user.lastname}"
+        notifications = Notification.query.filter_by(employeename=current_user.firstname+' '+current_user.lastname, is_Read=False).all()
 
         dateobj = datetime.strptime(requesteddate, "%Y-%m-%d").date()
         timeobj = datetime.strptime(shiftstarttime, "%H:%M").time()
@@ -404,17 +410,30 @@ def requestshiftsave():
                     db.session.commit()
                 else:
                     warn1 = f"Please check, Your start time selection is Overdue"
-                    return render_template("pages-requestschedule-edit.html", imagesrc=imagesrc,name=name, warn1=warn1)
+                    return render_template("pages-requestschedule-edit.html", imagesrc=imagesrc,notifications=notifications,name=name, warn1=warn1)
             else:
                 warn2 = f"Please check, Your Ending time is prior to Start time"
-                return render_template("pages-requestschedule-edit.html", imagesrc=imagesrc,name=name, warn2=warn2)
+                return render_template("pages-requestschedule-edit.html", imagesrc=imagesrc,notifications=notifications,name=name, warn2=warn2)
         else:
             warn3 = f"Your Date is invalid!, it has already pass"
-            return render_template("pages-requestschedule-edit.html", imagesrc=imagesrc,name=name, warn3=warn3)
+            return render_template("pages-requestschedule-edit.html", imagesrc=imagesrc,notifications=notifications,name=name, warn3=warn3)
 
         
         
-    return render_template("pages-requestschedule-edit.html", imagesrc=imagesrc,name=name, success=success)
+    return render_template("pages-requestschedule-edit.html", imagesrc=imagesrc,notifications=notifications,name=name, success=success)
+
+def reverse_geocode(lat, lon):
+    url = f'https://nominatim.openstreetmap.org/reverse'
+    params = {
+        'format': 'json',
+        'lat': lat,
+        'lon': lon,
+        'zoom': 18,
+        'addressdetails': 1
+    }
+    response = requests.get(url, params=params)
+    data = response.json()
+    return data
 
 @app.route('/home/attendance')
 @login_required
@@ -430,8 +449,9 @@ def myattendance():
         imagesrc = None
     
     job = f"{current_user.job}"
+    notifications = Notification.query.filter_by(employeename=current_user.firstname+' '+current_user.lastname, is_Read=False).all()
 
-    return render_template("pages-attendance-edit.html", name=name,job=job,imagesrc=imagesrc)
+    return render_template("pages-attendance-edit.html", name=name,job=job,notifications=notifications,imagesrc=imagesrc)
 
 @app.route('/home/attendancesubmit', methods=['POST'])
 @login_required
@@ -447,24 +467,24 @@ def myattendancesubmit():
         imagesrc = None
 
     if 'locationCheckbox' in request.form:
-        #if request.method == 'POST':
+        if request.method == 'POST':
             latitude = request.form['latitude']
             longitude = request.form['longitude']
             userid = db.session.query(User).filter(User.firstname+' '+User.lastname == current_user.firstname+' '+current_user.lastname).first().id
+            notifications = Notification.query.filter_by(employeename=current_user.firstname+' '+current_user.lastname, is_Read=False).all()
 
             if latitude and longitude:
-                attendance = Attendance(useid=userid, latitude=latitude, longitude=longitude)
+                location_data = reverse_geocode(latitude, longitude)
+                address = location_data.get('display_name', 'Address not found')
+
+                attendance = Attendance(employeename=fullname,userid=userid, latitude=latitude, longitude=longitude,address=address)
                 db.session.add(attendance)
                 db.session.commit()
                 success = "Location stored successfully"
-                return render_template("pages-attendance-edit.html", success=success,name=name,imagesrc=imagesrc)
+                return render_template("pages-attendance-edit.html", success=success,notifications=notifications,name=name,imagesrc=imagesrc)
     warnn = "Location not stored or checkbox not checked or location unavailable"
 
-    
-
-    
-
-    return render_template("pages-attendance-edit.html", warnn=warnn,name=name,imagesrc=imagesrc)
+    return render_template("pages-attendance-edit.html", warnn=warnn,notifications=notifications,name=name,imagesrc=imagesrc)
 
 #END OF PROVIDERS FUNCTIONS
 
@@ -532,9 +552,9 @@ def companyconfirm():
     profilepic = {current_user.profilepic}
     name = f"{current_user.firstname} {current_user.lastname}"
     email = f"{current_user.emailaddress}"
+    notifications = Notification.query.filter_by(employeename=fullname, is_Read=False).all()
     
-    
-    return render_template("admin-profile-edit.html", name=name, company=company,job=job,imagesrc=imagesrc,
+    return render_template("admin-profile-edit.html", name=name, company=company,job=job,notifications=notifications,imagesrc=imagesrc,
                                                         warnn=warnn,about=about,email=email)
 
 
@@ -571,9 +591,9 @@ def admiinhome():
         profilepic = {current_user.profilepic}
         name = f"{current_user.firstname} {current_user.lastname}"
         email = f"{current_user.emailaddress}"
-        
+        notifications = Notification.query.filter_by(employeename=fullname, is_Read=False).all()
     
-    return render_template("admin-profile-edit.html", name=name, company=company,job=job,imagesrc=imagesrc,
+    return render_template("admin-profile-edit.html", name=name, company=company,job=job,notifications=notifications,imagesrc=imagesrc,
                                                         about=about,email=email)
 
 
@@ -585,6 +605,7 @@ def setschedule():
     name = f"{current_user.firstname} {current_user.lastname}"
 
     fullname = f'{current_user.firstname} {current_user.lastname}'
+    
     checker = db.session.query(User).filter(User.firstname +' '+ User.lastname==fullname).first()  
     if checker.profilepic:
         imagedata = base64.b64encode(checker.profilepic).decode('utf-8')
@@ -593,7 +614,10 @@ def setschedule():
         imagesrc = None
 
     job = f"{current_user.job}"
-    return render_template("pages-setschedule-edit.html",name=name,job=job,imagesrc=imagesrc, options=options)
+
+    shifts = Shift.query.all()
+    notifications = Notification.query.filter_by(employeename=fullname, is_Read=False).all()
+    return render_template("pages-setschedule-edit.html",name=name,job=job,shifts=shifts,notifications=notifications,imagesrc=imagesrc, options=options)
 
 @app.route('/storeschedule', methods = ['POST'])
 def storeschedule():
@@ -615,6 +639,8 @@ def storeschedule():
 
         name = f"{current_user.firstname} {current_user.lastname}"
 
+        notifications = Notification.query.filter_by(employeename=fullname, is_Read=False).all()
+
         dateobj = datetime.strptime(shiftdate, "%Y-%m-%d").date()
         timeobj = datetime.strptime(shiftstarttime, "%H:%M").time()
         #if db.session.query(User).filter_by(firstname=f'{current_user.firstname}'):
@@ -635,20 +661,20 @@ def storeschedule():
                     db.session.commit()
                 else:
                     warn1 = f"Please check, Your start time selection is Overdue"
-                    return render_template("pages-setschedule-edit.html", imagesrc=imagesrc,name=name, warn1=warn1)
+                    return render_template("pages-setschedule-edit.html", imagesrc=imagesrc,notifications=notifications,name=name, warn1=warn1)
             else:
                 warn2 = f"Please check, Your Ending time is prior to Start time"
-                return render_template("pages-setschedule-edit.html", imagesrc=imagesrc,name=name, warn2=warn2)
+                return render_template("pages-setschedule-edit.html", imagesrc=imagesrc,notifications=notifications,name=name, warn2=warn2)
         else:
             warn3 = f"Your Date is invalid!, it has already pass"
-            return render_template("pages-setschedule-edit.html", imagesrc=imagesrc,name=name, warn3=warn3)
+            return render_template("pages-setschedule-edit.html", imagesrc=imagesrc,notifications=notifications,name=name, warn3=warn3)
 
         success = f"The Shift was Set Successfully"
         options = User.query.filter_by(role='HealthcareProvider').all()
         
         #return redirect(url_for('setschedule'))
         
-    return render_template("pages-setschedule-edit.html", success=success,imagesrc=imagesrc,name=name, options=options)
+    return render_template("pages-setschedule-edit.html", success=success,notifications=notifications,imagesrc=imagesrc,name=name, options=options)
 
 @app.route('/adminhome/viewshiftrequests')
 @login_required
@@ -665,7 +691,8 @@ def viewshiftrequests():
         imagesrc = None
 
     job = f"{current_user.job}"
-    return render_template("pages-viewrequests-edit.html", name=name,job=job,imagesrc=imagesrc, shiftrequests=shiftrequests)
+    notifications = Notification.query.filter_by(employeename=fullname, is_Read=False).all()
+    return render_template("pages-viewrequests-edit.html", name=name,job=job,imagesrc=imagesrc,notifications=notifications, shiftrequests=shiftrequests)
 
 
 
@@ -711,7 +738,8 @@ def approverequests():
         '''     
     shiftrequests = ShiftRequest.query.all()
     name = f"{current_user.firstname} {current_user.lastname}"
-    return render_template("pages-viewrequests-edit.html", name=name, shiftrequests=shiftrequests)
+    notifications = Notification.query.filter_by(employeename=name, is_Read=False).all()
+    return render_template("pages-viewrequests-edit.html", name=name,notifications=notifications,shiftrequests=shiftrequests)
 
 
 @app.route('/adminhome/trackattendance')
@@ -729,7 +757,8 @@ def trackattendance():
         imagesrc = None
 
     job = f"{current_user.job}"
-    return render_template("pages-trackattendance-edit.html", name=name,job=job, imagesrc=imagesrc,attendances=attendances)
+    notifications = Notification.query.filter_by(employeename=fullname, is_Read=False).all()
+    return render_template("pages-trackattendance-edit.html", name=name,job=job, notifications=notifications,imagesrc=imagesrc,attendances=attendances)
 
 #END OF ADMIN FUNCTIONS
 
