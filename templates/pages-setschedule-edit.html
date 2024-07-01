@@ -36,6 +36,12 @@
   * Author: BootstrapMade.com
   * License: https://bootstrapmade.com/license/
   ======================================================== -->
+
+  <style>
+    .hidden {
+        display: none;
+    }
+</style>
 </head>
 
 <body>
@@ -179,6 +185,13 @@
         </a>
       </li>
 
+      <li class="nav-item">
+        <a class="nav-link collapsed" href="{{ url_for('viewinsights') }}">
+          <i class="bi bi-question-circle"></i>
+          <span>View Schedule Insights</span>
+        </a>
+      </li>
+
     </ul>
 
   </aside><!-- End Sidebar-->
@@ -206,20 +219,89 @@
                             {% endfor %}
                         </select>
           </div>
-          <div class="col-md-12">
-            <label for="inputName5" class="form-label" style="font-size: large;">Date</label>
-            <input type="date" class="form-control" name="shiftdate" id="" style="width: 80%; margin-bottom: 18px;" required>
+          <div>
+            <label for="inputName5" class="form-label" style="font-size: large;">Scheduling Mode</label>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="gridRadios" id="gridRadios1" value="daily" checked onclick="toggleSchedulingMode()">
+              <label class="form-check-label" for="gridRadios1">
+                Daily
+              </label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="gridRadios" id="gridRadios2" value="weekly" onclick="toggleSchedulingMode()">
+              <label class="form-check-label" for="gridRadios2">
+                Weekly
+              </label>
+            </div>
           </div>
-          <div style="display: flex;
-                      flex-direction: row;">
-            <div class="col-md-6">
-              <label for="inputEmail5" class="form-label" style="font-size: large;">Shift Start Time</label>
-              <input type="time" class="form-control" name="shiftstarttime" id="" style="width: 30%; margin-bottom: 18px;" required>
+
+          <!--DAILY SCHEDULING-->
+          <div id="dailyScheduling">
+            <div class="col-md-12">
+              <label for="inputName5" class="form-label" style="font-size: large;">Choose a Day</label>
+              <input type="date" class="form-control" name="shiftdate" id="dailyShiftDate" style="width: 80%; margin-bottom: 18px;" required>
             </div>
-            <div class="col-md-6">
-              <label for="inputPassword5" class="form-label" style="font-size: large;">Shift End Time</label>
-              <input type="time" class="form-control" name="shiftendtime" id="" style="width: 30%; margin-bottom: 18px;" required>
+            <div style="display: flex;
+                        flex-direction: row;">
+              <div class="col-md-6">
+                <label for="inputEmail5" class="form-label" style="font-size: large;">Shift Start Time</label>
+                <input type="time" class="form-control" name="shiftstarttime" id="dailyShiftStartTime" style="width: 30%; margin-bottom: 18px;" required>
+              </div>
+              <div class="col-md-6">
+                <label for="inputPassword5" class="form-label" style="font-size: large;">Shift End Time</label>
+                <input type="time" class="form-control" name="shiftendtime" id="dailyShiftEndTime" style="width: 30%; margin-bottom: 18px;" required>
+              </div>
             </div>
+          </div>
+          
+
+        <!--<form action="{{url_for('storeschedule')}}" method="POST" class="row g-3">
+          <!--WEEKLY SCHEDULING-->
+          <div id="weeklyScheduling" class="hidden">
+            <div class="col-md-12">
+              <label for="inputName5" class="form-label" style="font-size: large;">Choose a Week</label>
+              <input type="week" class="form-control" name="shiftweek" id="weeklyShiftDate" style="width: 80%; margin-bottom: 18px;" required>
+            </div>
+            
+
+            <!-- Table with stripped rows -->
+            <table class="table table-striped">
+              <thead>
+                <tr>
+                  <th scope="col">Day</th>
+                  <th scope="col">Shift Start Time</th>
+                  <th scope="col">Shift End Time</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">Monday</th>
+                  <td><input type="time" style="width: 150px;" class="form-control shift-start-time" name="monday_shiftstarttime" id="" style="width: 30%; margin-bottom: 18px;" required></td>
+                  <td><input type="time" style="width: 150px;" class="form-control shift-end-time" name="monday_shiftendtime" id="" style="width: 30%; margin-bottom: 18px;" required></td>
+                </tr>
+                <tr>
+                  <th scope="row">Tuesday</th>
+                  <td><input type="time" style="width: 150px;" class="form-control shift-start-time" name="tuesday_shiftstarttime" id="" style="width: 30%; margin-bottom: 18px;" required></td>
+                  <td><input type="time" style="width: 150px;" class="form-control shift-end-time" name="tuesday_shiftendtime" id="" style="width: 30%; margin-bottom: 18px;" required></td>
+                </tr>
+                <tr>
+                  <th scope="row">Wednesday</th>
+                  <td><input type="time" style="width: 150px;" class="form-control shift-start-time" name="wednesday_shiftstarttime" id="" style="width: 30%; margin-bottom: 18px;" required></td>
+                  <td><input type="time" style="width: 150px;" class="form-control shift-end-time" name="wednesday_shiftendtime" id="" style="width: 30%; margin-bottom: 18px;" required></td>
+                </tr>
+                <tr>
+                  <th scope="row">Thursday</th>
+                  <td><input type="time" style="width: 150px;" class="form-control shift-start-time" name="thursday_shiftstarttime" id="" style="width: 30%; margin-bottom: 18px;" required></td>
+                  <td><input type="time" style="width: 150px;" class="form-control shift-end-time" name="thursday_shiftendtime" id="" style="width: 30%; margin-bottom: 18px;" required></td>
+                </tr>
+                <tr>
+                  <th scope="row">Friday</th>
+                  <td><input type="time" style="width: 150px;" class="form-control shift-start-time" name="friday_shiftstarttime" id="" style="width: 30%; margin-bottom: 18px;" required></td>
+                  <td><input type="time" style="width: 150px;" class="form-control shift-end-time" name="friday_shiftendtime" id="" style="width: 30%; margin-bottom: 18px;" required></td>
+                </tr>
+              </tbody>
+            </table>
+            <!-- End Table with stripped rows -->
           </div>
     
           <div class="text-center">
@@ -227,35 +309,6 @@
             <button type="reset" class="btn btn-secondary">Reset</button>
           </div>
         </form><!-- End Multi Columns Form -->
-
-        <br>
-        <br>
-        <p style="font-weight: 700;">Already Set Schedules</p>
-        <table class="table">
-          <thead>
-            <tr>
-              <th scope="col">#</th>
-              <th scope="col">Name</th>
-              <th scope="col">Day</th>
-              <th scope="col">Date</th>
-              <th scope="col">Start Time</th>
-              <th scope="col">End Time</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for shift in shifts %}
-              <tr>
-                  <td>{{ shift.id }}</td>
-                  <td>{{ shift.employeename }}</td>
-                  <td>{{shift.shiftdate.strftime("%A")}}</td>
-                  <td>{{shift.shiftdate}}</td>
-                  <td>{{ shift.shiftstarttime }}</td>
-                  <td>{{ shift.shiftendtime }}</td>
-              </tr>
-          {% endfor %}
-    
-          </tbody>
-        </table>
       </div>
     </div>
 
@@ -289,7 +342,72 @@
 
  <!-- Template Main JS File -->
  <script src="{{url_for('static', filename='assets/js/main.js')}}"></script>
+ <script>
+  function toggleSchedulingMode() {
+            const dailyScheduling = document.getElementById('dailyScheduling');
+            const weeklyScheduling = document.getElementById('weeklyScheduling');
+            const dailyRadio = document.getElementById('gridRadios1');
+            const weeklyRadio = document.getElementById('gridRadios2');
 
+            if (dailyRadio.checked) {
+                dailyScheduling.classList.remove('hidden');
+                weeklyScheduling.classList.add('hidden');
+
+                // Add required attribute to daily fields
+                document.getElementById('dailyShiftDate').setAttribute('required', 'required');
+                document.getElementById('dailyShiftStartTime').setAttribute('required', 'required');
+                document.getElementById('dailyShiftEndTime').setAttribute('required', 'required');
+
+                // Remove required attribute from weekly fields
+                document.getElementById('weeklyShiftDate').removeAttribute('required');
+                document.querySelectorAll('.shift-start-time').forEach(input => input.removeAttribute('required'));
+                document.querySelectorAll('.shift-end-time').forEach(input => input.removeAttribute('required'));
+            } else {
+                dailyScheduling.classList.add('hidden');
+                weeklyScheduling.classList.remove('hidden');
+
+                // Remove required attribute from daily fields
+                document.getElementById('dailyShiftDate').removeAttribute('required');
+                document.getElementById('dailyShiftStartTime').removeAttribute('required');
+                document.getElementById('dailyShiftEndTime').removeAttribute('required');
+
+                // Add required attribute to weekly fields
+                document.getElementById('weeklyShiftDate').setAttribute('required', 'required');
+                document.querySelectorAll('.shift-start-time').forEach(input => input.setAttribute('required', 'required'));
+                document.querySelectorAll('.shift-end-time').forEach(input => input.setAttribute('required', 'required'));
+            }
+        }
+  // Initialize the visibility based on the default checked radio button
+  document.addEventListener('DOMContentLoaded', toggleSchedulingMode);
+
+  function copyShiftTimes() {
+        var startTimes = document.querySelectorAll('.shift-start-time');
+        var endTimes = document.querySelectorAll('.shift-end-time');
+        
+        startTimes.forEach(function(startTime, index) {
+            if (index > 0) {
+                startTime.value = startTimes[0].value;
+            }
+        });
+        
+        endTimes.forEach(function(endTime, index) {
+            if (index > 0) {
+                endTime.value = endTimes[0].value;
+            }
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        toggleSchedulingMode();
+        copyShiftTimes();
+
+        var firstStartTime = document.querySelector('.shift-start-time');
+        var firstEndTime = document.querySelector('.shift-end-time');
+
+        firstStartTime.addEventListener('change', copyShiftTimes);
+        firstEndTime.addEventListener('change', copyShiftTimes);
+    });
+</script>
 </body>
 
 </html>

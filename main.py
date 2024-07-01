@@ -9,12 +9,20 @@
 # shiftend time should be ahead of starttime.
 # one admin for each company
 # shift expiry time
-# notifications#
+# notifications
+# 
+
+# swap shifts
+# cancelshifts
+# shift report
+# coincidences to approve
+# request change
+# manager to query report#
 
 import mysql.connector
 from flask import Flask, request, jsonify,redirect, url_for, render_template
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import and_, exists
+from sqlalchemy import and_, exists,func
 from sqlalchemy.orm import relationship
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 import requests
@@ -54,6 +62,8 @@ with app.app_context():
         __tablename__="shifts"
         id = db.Column(db.Integer, primary_key=True)
         employeename = db.Column(db.String(120), nullable=False)
+        company = db.Column(db.String(100))
+        job = db.Column(db.String(100))
         userid = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
         shiftdate = db.Column(db.Date, nullable=False)
         shiftstarttime = db.Column(db.Time, nullable=False)
@@ -395,8 +405,9 @@ def requestshiftsave():
             if (shiftendtime > shiftstarttime):
                 if (timeobj >= datetime.now().time()):
                     userid = db.session.query(User).filter(User.firstname+' '+User.lastname == current_user.firstname+' '+current_user.lastname).first().id
+                    company = current_user.company
                     name = f"{current_user.firstname} {current_user.lastname}"
-                    quest = Shift(employeename=name,userid=userid,shiftdate=requesteddate,shiftstarttime=shiftstarttime,shiftendtime=shiftendtime,shiftrequestreason=shiftrequestreason)
+                    quest = Shift(employeename=name,company=company,userid=userid,shiftdate=requesteddate,shiftstarttime=shiftstarttime,shiftendtime=shiftendtime,shiftrequestreason=shiftrequestreason)
                     success = f"Your Request was sent Successfully"
                     db.session.add(quest)
 
@@ -623,58 +634,131 @@ def setschedule():
 def storeschedule():
 
     if request.method == 'POST':
-        employeename = request.form['employeename']
-        #userid = request.form['userid']
-        shiftdate = request.form['shiftdate']
-        shiftstarttime = request.form['shiftstarttime']
-        shiftendtime = request.form['shiftendtime']
+        if request.form['gridRadios'] == 'daily':
+            employeename = request.form['employeename']
+            #userid = request.form['userid']
+            shiftdate = request.form['shiftdate']
+            shiftstarttime = request.form['shiftstarttime']
+            shiftendtime = request.form['shiftendtime']
 
-        fullname = f'{current_user.firstname} {current_user.lastname}'
-        checker = db.session.query(User).filter(User.firstname +' '+ User.lastname==fullname).first()  
-        if checker.profilepic:
-            imagedata = base64.b64encode(checker.profilepic).decode('utf-8')
-            imagesrc = f"data:image/jpeg;base64,{imagedata}"
-        else:
-            imagesrc = None
-
-        name = f"{current_user.firstname} {current_user.lastname}"
-
-        notifications = Notification.query.filter_by(employeename=fullname, is_Read=False).all()
-
-        dateobj = datetime.strptime(shiftdate, "%Y-%m-%d").date()
-        timeobj = datetime.strptime(shiftstarttime, "%H:%M").time()
-        #if db.session.query(User).filter_by(firstname=f'{current_user.firstname}'):
-        if (dateobj >= date.today()):
-            if (shiftendtime > shiftstarttime):
-                if (timeobj >= datetime.now().time()):
-                    userid = db.session.query(User).filter(User.firstname+' '+User.lastname == current_user.firstname+' '+current_user.lastname).first().id
-                    name = f"{current_user.firstname} {current_user.lastname}"
-                    approved = True
-                    shift = Shift(employeename=employeename,userid=userid,shiftdate=shiftdate,shiftstarttime=shiftstarttime,shiftendtime=shiftendtime,approved=approved)
-                    success = f"The Shift was Set Successfully"
-                    db.session.add(shift)
-
-                    notification_message = f"New Schedule Set on {shiftdate}"
-                    notification = Notification(employeename=employeename,userid=userid,message=notification_message)
-                    db.session.add(notification)
-
-                    db.session.commit()
-                else:
-                    warn1 = f"Please check, Your start time selection is Overdue"
-                    return render_template("pages-setschedule-edit.html", imagesrc=imagesrc,notifications=notifications,name=name, warn1=warn1)
+            fullname = f'{current_user.firstname} {current_user.lastname}'
+            checker = db.session.query(User).filter(User.firstname +' '+ User.lastname==fullname).first()  
+            if checker.profilepic:
+                imagedata = base64.b64encode(checker.profilepic).decode('utf-8')
+                imagesrc = f"data:image/jpeg;base64,{imagedata}"
             else:
-                warn2 = f"Please check, Your Ending time is prior to Start time"
-                return render_template("pages-setschedule-edit.html", imagesrc=imagesrc,notifications=notifications,name=name, warn2=warn2)
-        else:
-            warn3 = f"Your Date is invalid!, it has already pass"
-            return render_template("pages-setschedule-edit.html", imagesrc=imagesrc,notifications=notifications,name=name, warn3=warn3)
+                imagesrc = None
 
-        success = f"The Shift was Set Successfully"
-        options = User.query.filter_by(role='HealthcareProvider').all()
-        
-        #return redirect(url_for('setschedule'))
-        
-    return render_template("pages-setschedule-edit.html", success=success,notifications=notifications,imagesrc=imagesrc,name=name, options=options)
+            name = f"{current_user.firstname} {current_user.lastname}"
+
+            notifications = Notification.query.filter_by(employeename=fullname, is_Read=False).all()
+
+            dateobj = datetime.strptime(shiftdate, "%Y-%m-%d").date()
+            timeobj = datetime.strptime(shiftstarttime, "%H:%M").time()
+            #if db.session.query(User).filter_by(firstname=f'{current_user.firstname}'):
+            if (dateobj >= date.today()):
+                if (shiftendtime > shiftstarttime):
+                    if (timeobj >= datetime.now().time()):
+                        userid = db.session.query(User).filter(User.firstname+' '+User.lastname == current_user.firstname+' '+current_user.lastname).first().id
+                        company = current_user.company
+                        firstname, lastname = employeename.split(' ', 1)
+                        userr = User.query.filter(
+                                func.concat(User.firstname, ' ', User.lastname) == employeename
+                            ).first()
+                        name = f"{current_user.firstname} {current_user.lastname}"
+                        approved = True
+                        shift = Shift(employeename=employeename,company=company,job=userr.job,userid=userid,shiftdate=shiftdate,shiftstarttime=shiftstarttime,shiftendtime=shiftendtime,approved=approved)
+                        success = f"The Shift was Set Successfully"
+                        db.session.add(shift)
+
+                        notification_message = f"New Schedule Set on {shiftdate}"
+                        notification = Notification(employeename=employeename,userid=userid,message=notification_message)
+                        db.session.add(notification)
+
+                        db.session.commit()
+                    else:
+                        warn1 = f"Please check, Your start time selection is Overdue"
+                        return render_template("pages-setschedule-edit.html", imagesrc=imagesrc,notifications=notifications,name=name, warn1=warn1)
+                else:
+                    warn2 = f"Please check, Your Ending time is prior to Start time"
+                    return render_template("pages-setschedule-edit.html", imagesrc=imagesrc,notifications=notifications,name=name, warn2=warn2)
+            else:
+                warn3 = f"Your Date is invalid!, it has already pass"
+                return render_template("pages-setschedule-edit.html", imagesrc=imagesrc,notifications=notifications,name=name, warn3=warn3)
+
+            success = f"The Shift was Set Successfully"
+            options = User.query.filter_by(role='HealthcareProvider').all()
+            
+            #return redirect(url_for('setschedule'))
+        elif request.form['gridRadios'] == 'weekly':
+            employeename = request.form['employeename']
+            week = request.form['shiftweek']
+            year, week_num = map(int, week.split('-W'))
+            first_day_of_week = datetime.strptime(f'{year}-W{week_num-1}-1', '%Y-W%W-%w').date()
+            
+            days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday']
+            for i, day in enumerate(days):
+                shiftstarttime = request.form[f'{day}_shiftstarttime']
+                shiftendtime = request.form[f'{day}_shiftendtime']
+                shiftdate = first_day_of_week + timedelta(days=i)
+
+                # Convert to datetime objects
+                shiftstarttime = datetime.strptime(shiftstarttime, "%H:%M").time()
+                shiftendtime = datetime.strptime(shiftendtime, "%H:%M").time()
+
+                # Check user profile
+                fullname = f'{current_user.firstname} {current_user.lastname}'
+                checker = db.session.query(User).filter(func.concat(User.firstname, ' ', User.lastname) == fullname).first()  
+                if checker.profilepic:
+                    imagedata = base64.b64encode(checker.profilepic).decode('utf-8')
+                    imagesrc = f"data:image/jpeg;base64,{imagedata}"
+                else:
+                    imagesrc = None
+
+                name = f"{current_user.firstname} {current_user.lastname}"
+                notifications = Notification.query.filter_by(employeename=fullname, is_Read=False).all()
+
+                # Validate date and time
+                if shiftdate >= date.today():
+                    if shiftendtime > shiftstarttime:
+                        if shiftstarttime >= datetime.now().time():
+                            userid = db.session.query(User).filter(func.concat(User.firstname, ' ', User.lastname) == fullname).first().id
+                            company = current_user.company
+                            userr = db.session.query(User).filter(func.concat(User.firstname, ' ', User.lastname) == employeename).first()
+                            
+                            # Create Shift
+                            shift = Shift(
+                                employeename=employeename,
+                                company=company,
+                                job=userr.job,
+                                userid=userid,
+                                shiftdate=shiftdate,
+                                shiftstarttime=shiftstarttime,
+                                shiftendtime=shiftendtime
+                            )
+                            db.session.add(shift)
+
+                            # Create Notification
+                            notification_message = f"New Schedule Set on {shiftdate}"
+                            notification = Notification(employeename=employeename, userid=userid, message=notification_message)
+                            db.session.add(notification)
+
+                            db.session.commit()
+                        else:
+                            warn1 = "Please check, Your start time selection is Overdue"
+                            return render_template("pages-setschedule-edit.html", imagesrc=imagesrc, notifications=notifications, name=name, warn1=warn1)
+                    else:
+                        warn2 = "Please check, Your Ending time is prior to Start time"
+                        return render_template("pages-setschedule-edit.html", imagesrc=imagesrc, notifications=notifications, name=name, warn2=warn2)
+                else:
+                    warn3 = "Your Date is invalid!, it has already passed"
+                    return render_template("pages-setschedule-edit.html", imagesrc=imagesrc, notifications=notifications, name=name, warn3=warn3)
+
+            success = "The Shift was Set Successfully"
+            options = User.query.filter_by(role='HealthcareProvider').all()
+            return render_template("pages-setschedule-edit.html", success=success, notifications=notifications, imagesrc=imagesrc, name=name, options=options)
+
+    return render_template("pages-setschedule-edit.html")
 
 @app.route('/adminhome/viewshiftrequests')
 @login_required
@@ -735,6 +819,9 @@ def approverequests():
             db.session.add(shift)
             db.session.commit()
             return redirect(url_for('about'))
+            -schedule weekly
+            -changes(swap)
+            
         '''     
     shiftrequests = ShiftRequest.query.all()
     name = f"{current_user.firstname} {current_user.lastname}"
@@ -760,6 +847,25 @@ def trackattendance():
     notifications = Notification.query.filter_by(employeename=fullname, is_Read=False).all()
     return render_template("pages-trackattendance-edit.html", name=name,job=job, notifications=notifications,imagesrc=imagesrc,attendances=attendances)
 
+
+@app.route('/adminhome/viewinsights')
+@login_required
+def viewinsights():
+    name = f"{current_user.firstname} {current_user.lastname}"
+
+    fullname = f'{current_user.firstname} {current_user.lastname}'
+    checker = db.session.query(User).filter(User.firstname +' '+ User.lastname==fullname).first()  
+    if checker.profilepic:
+        imagedata = base64.b64encode(checker.profilepic).decode('utf-8')
+        imagesrc = f"data:image/jpeg;base64,{imagedata}"
+    else:
+        imagesrc = None
+
+    job = f"{current_user.job}"
+    notifications = Notification.query.filter_by(employeename=fullname, is_Read=False).all()
+    insights = Shift.query().filter_by(company=current_user.company).all()
+    return render_template("pages-viewinsights.html", name=name,insights=insights,notifications=notifications,job=job, imagesrc=imagesrc)
+#END OF ADMIN FUNCTIONS
 #END OF ADMIN FUNCTIONS
 
 
