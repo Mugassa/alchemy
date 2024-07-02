@@ -201,23 +201,14 @@
     <div class="card">
       <div class="card-body">
         <h5 style="font-size: x-large;" class="card-title">Set Shifts for Healthcare Service Providers</h5>
-        {% if success %}
-        <div class="success">{{success|safe}}</div>  
-        {% endif %}
-        {% if warn1 %}
-        <div class="message">{{warn1|safe}}</div>
-        {% endif %}
-        {% if collisionprompt %}
-        <div class="message">{{collisionprompt|safe}}</div>
-        {% endif %}
-        {% if warn2 %}
-        <div class="message">{{warn2|safe}}</div>
-        {% endif %}
-        {% if warn3 %}
-        <div class="message">{{warn3|safe}}</div>
-        {% endif %}
+
+        <div class="success">{{success}}</div>  
+        <div class="message">{{warn1}}</div>
+        <div class="message">{{warn2}}</div>
+        <div class="message">{{warn3}}</div>
         <!-- Multi Columns Form -->
-        <form action="{{url_for('storeschedule')}}" method="POST" class="row g-3">
+       
+        <form action="{{ url_for('modify_shift', pending_shift_id=pending_shift.id) }}" method="POST" class="row g-3">
           <div class="col-md-12">
             <label for="inputName5" class="form-label" style="font-size: large;">Employee Name</label>
             <select class="form-control"  style="padding-right: 180px;
@@ -225,7 +216,7 @@
                         padding-bottom: 4px;" id="employeename" name="employeename" required>
                             <!--for looop-->
                             {% for option in options %}
-                                <option value="{{ option.firstname }} {{ option.lastname }}">{{option.firstname}} {{ option.lastname }}</option>
+                                <option value="{{ pending_shift.employeename }}">{{ pending_shift.employeename }}</option>
                             {% endfor %}
                         </select>
           </div>
@@ -255,11 +246,11 @@
                         flex-direction: row;">
               <div class="col-md-6">
                 <label for="inputEmail5" class="form-label" style="font-size: large;">Shift Start Time</label>
-                <input type="time" class="form-control" name="shiftstarttime" id="dailyShiftStartTime" style="width: 30%; margin-bottom: 18px;" required>
+                <input type="time" class="form-control" value="{{ pending_shift.shiftstarttime.strftime('%H:%M') }}" name="shiftstarttime" id="dailyShiftStartTime" style="width: 30%; margin-bottom: 18px;" required>
               </div>
               <div class="col-md-6">
                 <label for="inputPassword5" class="form-label" style="font-size: large;">Shift End Time</label>
-                <input type="time" class="form-control" name="shiftendtime" id="dailyShiftEndTime" style="width: 30%; margin-bottom: 18px;" required>
+                <input type="time" class="form-control" value="{{ pending_shift.shiftendtime.strftime('%H:%M') }}" name="shiftendtime" id="dailyShiftEndTime" style="width: 30%; margin-bottom: 18px;" required>
               </div>
             </div>
           </div>
@@ -286,28 +277,28 @@
               <tbody>
                 <tr>
                   <th scope="row">Monday</th>
-                  <td><input type="time" style="width: 150px;" class="form-control shift-start-time" name="monday_shiftstarttime" id="" style="width: 30%; margin-bottom: 18px;" required></td>
-                  <td><input type="time" style="width: 150px;" class="form-control shift-end-time" name="monday_shiftendtime" id="" style="width: 30%; margin-bottom: 18px;" required></td>
+                  <td><input type="time" style="width: 150px;" class="form-control shift-start-time" name="monday_shiftstarttime" value="{{ pending_shift.monday_shiftstarttime.strftime('%H:%M') }}" id="" style="width: 30%; margin-bottom: 18px;" required></td>
+                  <td><input type="time" style="width: 150px;" class="form-control shift-end-time" name="monday_shiftendtime" value="{{ pending_shift.monday_shiftendtime.strftime('%H:%M') }}" id="" style="width: 30%; margin-bottom: 18px;" required></td>
                 </tr>
                 <tr>
                   <th scope="row">Tuesday</th>
-                  <td><input type="time" style="width: 150px;" class="form-control shift-start-time" name="tuesday_shiftstarttime" id="" style="width: 30%; margin-bottom: 18px;" required></td>
-                  <td><input type="time" style="width: 150px;" class="form-control shift-end-time" name="tuesday_shiftendtime" id="" style="width: 30%; margin-bottom: 18px;" required></td>
+                  <td><input type="time" style="width: 150px;" class="form-control shift-start-time" name="tuesday_shiftstarttime" value="{{ pending_shift.tuesday_shiftstarttime.strftime('%H:%M') }}" id="" style="width: 30%; margin-bottom: 18px;" required></td>
+                  <td><input type="time" style="width: 150px;" class="form-control shift-end-time" name="tuesday_shiftendtime" value="{{ pending_shift.tuesday_shiftendtime.strftime('%H:%M') }}" id="" style="width: 30%; margin-bottom: 18px;" required></td>
                 </tr>
                 <tr>
                   <th scope="row">Wednesday</th>
-                  <td><input type="time" style="width: 150px;" class="form-control shift-start-time" name="wednesday_shiftstarttime" id="" style="width: 30%; margin-bottom: 18px;" required></td>
-                  <td><input type="time" style="width: 150px;" class="form-control shift-end-time" name="wednesday_shiftendtime" id="" style="width: 30%; margin-bottom: 18px;" required></td>
+                  <td><input type="time" style="width: 150px;" class="form-control shift-start-time" name="wednesday_shiftstarttime" value="{{ pending_shift.wednesday_shiftstarttime.strftime('%H:%M') }}" id="" style="width: 30%; margin-bottom: 18px;" required></td>
+                  <td><input type="time" style="width: 150px;" class="form-control shift-end-time" name="wednesday_shiftendtime" value="{{ pending_shift.wednesday_shiftendtime.strftime('%H:%M') }}" id="" style="width: 30%; margin-bottom: 18px;" required></td>
                 </tr>
                 <tr>
                   <th scope="row">Thursday</th>
-                  <td><input type="time" style="width: 150px;" class="form-control shift-start-time" name="thursday_shiftstarttime" id="" style="width: 30%; margin-bottom: 18px;" required></td>
-                  <td><input type="time" style="width: 150px;" class="form-control shift-end-time" name="thursday_shiftendtime" id="" style="width: 30%; margin-bottom: 18px;" required></td>
+                  <td><input type="time" style="width: 150px;" class="form-control shift-start-time" name="thursday_shiftstarttime" value="{{ pending_shift.thursday_shiftstarttime.strftime('%H:%M') }}" id="" style="width: 30%; margin-bottom: 18px;" required></td>
+                  <td><input type="time" style="width: 150px;" class="form-control shift-end-time" name="thursday_shiftendtime" value="{{ pending_shift.thursday_shiftendtime.strftime('%H:%M') }}" id="" style="width: 30%; margin-bottom: 18px;" required></td>
                 </tr>
                 <tr>
                   <th scope="row">Friday</th>
-                  <td><input type="time" style="width: 150px;" class="form-control shift-start-time" name="friday_shiftstarttime" id="" style="width: 30%; margin-bottom: 18px;" required></td>
-                  <td><input type="time" style="width: 150px;" class="form-control shift-end-time" name="friday_shiftendtime" id="" style="width: 30%; margin-bottom: 18px;" required></td>
+                  <td><input type="time" style="width: 150px;" class="form-control shift-start-time" name="friday_shiftstarttime" value="{{ pending_shift.friday_shiftstarttime.strftime('%H:%M') }}" id="" style="width: 30%; margin-bottom: 18px;" required></td>
+                  <td><input type="time" style="width: 150px;" class="form-control shift-end-time" name="friday_shiftendtime" value="{{ pending_shift.friday_shiftendtime.strftime('%H:%M') }}" id="" style="width: 30%; margin-bottom: 18px;" required></td>
                 </tr>
               </tbody>
             </table>
@@ -315,8 +306,7 @@
           </div>
     
           <div class="text-center">
-            <button type="submit" class="btn btn-primary">Submit</button>
-            <button type="reset" class="btn btn-secondary">Reset</button>
+            <button type="submit">Modify</button>
           </div>
         </form><!-- End Multi Columns Form -->
       </div>
