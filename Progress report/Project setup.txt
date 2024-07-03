@@ -1,0 +1,29 @@
+# Project Setup and Dependencies
+
+## Backend Framework
+- Flask: Used as the web framework for developing the backend of the Provider Scheduling and Accountability Tracking System.
+
+## Database
+- SQLAlchemy: Used for ORM (Object-Relational Mapping) to interact with the database.
+- SQLite: Used as the database for development and testing purposes.
+
+## Required Libraries
+Below is a list of the required libraries and their versions. These libraries are specified in the `requirements.txt` file for easy installation.
+
+- Flask==2.0.1
+- Flask-SQLAlchemy==2.5.1
+- Flask-Login==0.5.0
+- Flask-WTF==0.15.1
+- Werkzeug==2.0.1
+
+## Additional Imports
+The following additional Python libraries are also used in the project:
+
+- datetime: For date and time manipulations.
+- base64: For encoding binary data to base64.
+- os: For interacting with the operating system.
+
+## Installation
+To install the required libraries, use the following command:
+```bash
+pip install -r requirements.txt

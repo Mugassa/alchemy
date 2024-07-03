@@ -1,0 +1,43 @@
+# Provider Scheduling and Accountability Tracking System
+
+## Project Overview
+The Provider Scheduling and Accountability Tracking System aims to streamline the scheduling process for healthcare providers and ensure accountability through efficient tracking mechanisms. The system includes features for scheduling, collision detection, notifications, and user management.
+
+## Current Milestones
+- **Database Setup:** Completed the initial setup of the database with tables for users, shifts, and notifications.
+- **User Authentication:** Implemented user registration, login, and role-based access control.
+- **Shift Scheduling:** Developed the basic functionality for setting daily and weekly shifts.
+- **Collision Detection:** Implemented collision detection to identify overlapping shifts.
+
+## Work Completed
+- **Database Models:** Created models for User, Shift, and Notification.
+- **User Interface:** Designed and implemented the user interface for scheduling shifts.
+- **Collision Detection Logic:** Developed and tested the logic for detecting scheduling conflicts.
+- **Notification System:** Set up the notification system to alert users of important events.
+- **Attendance Tracking:** Implemented attendance tracking through location.
+
+## Work in Progress
+- **Testing and Debugging:** Conducting thorough testing and debugging of the shift scheduling and collision detection features.
+- **Documentation:** Writing comprehensive documentation for the code and user guides.
+
+## Upcoming Tasks
+- **Advanced Features:** Adding features such as shift swapping and automated reminders.
+- **User Feedback Integration:** Collecting and integrating feedback from test users to improve the system.
+- **Performance Optimization:** Optimizing the performance of the system for faster load times and better scalability.
+- **Deployment:** Preparing the system for deployment on a live server.
+- **Mobile App Development:** Creating a mobile app for the system to enhance accessibility and usability.
+- **Fingerprint Attendance Tracking:** Implementing fingerprint hardware for tracking attendance.
+
+## Challenges and Solutions
+- **Time Comparisons:** Faced issues with comparing string and `datetime` objects, resolved by converting all time values to `datetime` objects before comparisons.
+
+## Feedback and Adjustments
+- **Mentor Feedback:** Received feedback to improve the collision detection logic and user interface. Adjusted the logic and redesigned some UI elements accordingly.
+- **Peer Review:** Conducted a peer review session that highlighted the need for better documentation and clearer error messages. Working on incorporating these suggestions.
+
+## Conclusion
+Significant progress has been made in developing the Provider Scheduling and Accountability Tracking System. The core functionalities are in place, and we are now focusing on refining the features, addressing any issues, and preparing for deployment. The next steps involve completing the shift approval process, adding advanced features, optimizing performance, developing a mobile app, and implementing fingerprint attendance tracking.
+
+---
+
+**Next Update:** [Date for the next update]
